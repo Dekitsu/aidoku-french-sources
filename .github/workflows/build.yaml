@@ -9,6 +9,11 @@ on:
       - "templates/**"
       - ".github/workflows/build.yaml"
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: true
