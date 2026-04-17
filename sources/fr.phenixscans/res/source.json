@@ -1,0 +1,13 @@
+{
+	"info": {
+		"id": "fr.phenixscans",
+		"name": "Phénix Scans",
+		"version": 1,
+		"url": "https://phenix-scans.co",
+		"contentRating": 1,
+		"languages": ["fr"]
+	},
+	"config": {
+		"breakingChangeVersion": 1
+	}
+}
