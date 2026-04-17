@@ -46,7 +46,7 @@ pub fn map_status(s: &str) -> MangaStatus {
         "Ongoing" => MangaStatus::Ongoing,
         "Completed" => MangaStatus::Completed,
         "Hiatus" => MangaStatus::Hiatus,
-        "Dropped" | "Abandoned" => MangaStatus::Abandoned,
+        "Dropped" | "Abandoned" => MangaStatus::Cancelled,
         _ => MangaStatus::Unknown,
     }
 }
