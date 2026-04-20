@@ -63,6 +63,7 @@ jobs:
       - name: Build sources
         run: |
           for src in ./sources/*; do
+            [ -f "$src/Cargo.toml" ] || continue
             (
               cd "$src"
               aidoku package
