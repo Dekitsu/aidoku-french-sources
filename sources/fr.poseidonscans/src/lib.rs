@@ -3,7 +3,7 @@
 use aidoku::{
     Chapter, FilterValue, Home, HomeComponent, HomeLayout, Listing, ListingKind, ListingProvider,
     Manga, MangaPageResult, Page, PageContent, Result, Source,
-    alloc::{String, Vec, format, string::ToString, vec},
+    alloc::{String, Vec, format, vec},
     imports::{net::Request, std::send_partial_result},
     prelude::*,
 };
@@ -12,6 +12,9 @@ mod models;
 use models::{
     ChapterItem, LatestResponse, MangaPageData, PageData, map_status, parse_iso8601,
 };
+
+mod rsc;
+use rsc::extract_rsc;
 
 const BASE_URL: &str = "https://poseidon-scans.net";
 const PAGE_LIMIT: usize = 16;
@@ -28,23 +31,6 @@ fn rsc_header(req: Request) -> Request {
             "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) \
              AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
         )
-}
-
-/// Parse a Next.js RSC stream and find the first row that deserialises into T.
-/// RSC format: each line is `{id}:{json-value}` or `{id}:I[...]` (module ref).
-fn extract_rsc<T: serde::de::DeserializeOwned>(body: &str) -> Option<T> {
-    for line in body.lines() {
-        // Skip module-reference lines and very short lines
-        let colon = line.find(':')?;
-        let json_part = &line[colon + 1..];
-        if json_part.starts_with('I') || json_part.starts_with("HL") {
-            continue;
-        }
-        if let Ok(val) = serde_json::from_str::<T>(json_part) {
-            return Some(val);
-        }
-    }
-    None
 }
 
 fn chapter_from_item(item: ChapterItem, slug: &str) -> Chapter {
@@ -96,58 +82,33 @@ impl Source for PoseidonScans {
         page: i32,
         _filters: Vec<FilterValue>,
     ) -> Result<MangaPageResult> {
-        // Search uses HTML CSS selectors on /series
+        // Use JSON API to avoid Cloudflare challenge on HTML pages
         let url = if let Some(ref q) = query {
-            if page > 1 {
-                format!("{}/series?search={}&page={}", BASE_URL, q, page)
-            } else {
-                format!("{}/series?search={}", BASE_URL, q)
-            }
-        } else if page > 1 {
-            format!("{}/series?page={}", BASE_URL, page)
+            format!(
+                "{}/api/manga/search?query={}&limit={}&page={}",
+                BASE_URL, q, PAGE_LIMIT, page
+            )
         } else {
-            format!("{}/series", BASE_URL)
+            format!(
+                "{}/api/manga/lastchapters?limit={}&page={}",
+                BASE_URL, PAGE_LIMIT, page
+            )
         };
 
-        let html = Request::get(&url)?
-            .header(
-                "User-Agent",
-                "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) \
-                 AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
-            )
-            .html()?;
-
-        let entries: Vec<Manga> = html
-            .select("div.grid a.block.group")
-            .map(|els| {
-                els.filter_map(|el| {
-                    let href = el.attr("abs:href")?;
-                    // extract slug from /serie/{slug}
-                    let slug = href.rsplit('/').next()?.to_string();
-                    let title = el.select_first("h2").and_then(|e| e.text())?;
-                    Some(Manga {
-                        key: slug.clone(),
-                        title,
-                        cover: Some(cover_url(&slug)),
-                        url: Some(format!("{}/serie/{}", BASE_URL, slug)),
-                        ..Default::default()
-                    })
-                })
-                .collect()
+        let resp: LatestResponse = Request::get(&url)?.json_owned()?;
+        let has_next = resp.data.len() >= PAGE_LIMIT
+            || resp.total.map(|t| (page as u32 * PAGE_LIMIT as u32) < t).unwrap_or(false);
+        let entries = resp
+            .data
+            .into_iter()
+            .map(|m| Manga {
+                key: m.slug.clone(),
+                title: m.title,
+                cover: Some(cover_url(&m.slug)),
+                url: Some(format!("{}/serie/{}", BASE_URL, m.slug)),
+                ..Default::default()
             })
-            .unwrap_or_default();
-
-        let has_next = html
-            .select("nav[aria-label=Pagination] a")
-            .map(|mut els| {
-                els.any(|el| {
-                    el.text()
-                        .map(|t| t.to_lowercase().contains("suivant"))
-                        .unwrap_or(false)
-                })
-            })
-            .unwrap_or(false);
-
+            .collect();
         Ok(MangaPageResult { entries, has_next_page: has_next })
     }
 
