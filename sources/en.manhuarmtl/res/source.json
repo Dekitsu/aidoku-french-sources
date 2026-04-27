@@ -1,0 +1,13 @@
+{
+	"info": {
+		"id": "en.manhuarmtl",
+		"name": "ManhuaRmTL",
+		"version": 1,
+		"url": "https://manhuarmtl.com",
+		"contentRating": 2,
+		"languages": ["en"]
+	},
+	"config": {
+		"breakingChangeVersion": 1
+	}
+}
