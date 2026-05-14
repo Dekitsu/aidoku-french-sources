@@ -10,7 +10,7 @@ use aidoku::{
 };
 
 mod models;
-use models::{ApiResponse, ChapterDetail, ChapterItem, MangaItem, map_status, parse_iso8601};
+use models::{ApiResponse, ChapterDetail, ChapterItem, MangaItem, SearchResponse, map_status, parse_iso8601};
 
 const API_URL: &str = "https://api.phenix-scans.co";
 const SITE_URL: &str = "https://phenix-scans.co";
@@ -91,23 +91,21 @@ impl Source for PhenixScans {
         page: i32,
         _filters: Vec<FilterValue>,
     ) -> Result<MangaPageResult> {
-        let url = if let Some(ref q) = query {
-            format!(
-                "{}/api/manga?limit={}&page={}&search={}",
-                API_URL, PAGE_LIMIT, page, q
-            )
+        if let Some(ref q) = query {
+            let url = format!("{}/api/front/manga/search?query={}", API_URL, q);
+            let resp: SearchResponse = Request::get(&url)?.json_owned()?;
+            let entries = resp.mangas.into_iter().map(manga_from_item).collect();
+            Ok(MangaPageResult { entries, has_next_page: false })
         } else {
-            format!(
+            let url = format!(
                 "{}/api/manga?limit={}&page={}&sort=updatedAt",
                 API_URL, PAGE_LIMIT, page
-            )
-        };
-
-        let resp: ApiResponse<Vec<MangaItem>> = Request::get(&url)?.json_owned()?;
-        let has_next = resp.data.len() >= PAGE_LIMIT;
-        let entries = resp.data.into_iter().map(manga_from_item).collect();
-
-        Ok(MangaPageResult { entries, has_next_page: has_next })
+            );
+            let resp: ApiResponse<Vec<MangaItem>> = Request::get(&url)?.json_owned()?;
+            let has_next = resp.data.len() >= PAGE_LIMIT;
+            let entries = resp.data.into_iter().map(manga_from_item).collect();
+            Ok(MangaPageResult { entries, has_next_page: has_next })
+        }
     }
 
     fn get_manga_update(

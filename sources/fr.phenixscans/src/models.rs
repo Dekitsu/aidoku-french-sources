@@ -9,6 +9,12 @@ pub struct ApiResponse<T> {
     pub data: T,
 }
 
+// Search endpoint envelope: { "mangas": [...] }
+#[derive(Deserialize)]
+pub struct SearchResponse {
+    pub mangas: Vec<MangaItem>,
+}
+
 #[derive(Deserialize)]
 pub struct MangaItem {
     pub id: String,
