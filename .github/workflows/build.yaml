@@ -23,11 +23,9 @@ jobs:
     env:
       RUSTC_WRAPPER: sccache
       SCCACHE_CACHE_SIZE: 2G
-      SCCACHE_VERSION: 0.3.0
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: google/wireit@setup-github-actions-caching/v1
       - name: Cache rust stuff
         uses: actions/cache@v4
         with:
@@ -46,11 +44,9 @@ jobs:
           path: ~/.cache/sccache
           key: ${{ runner.os }}-sccache-${{ github.sha }}
           restore-keys: ${{ runner.os }}-sccache-
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          override: true
-          target: wasm32-unknown-unknown
+          targets: wasm32-unknown-unknown
       - name: Install build dependencies
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -96,4 +92,3 @@ jobs:
           name: gh-pages
           path: public
           if-no-files-found: ignore
-
