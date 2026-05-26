@@ -5,8 +5,8 @@ use crate::{
 	models::*,
 };
 use aidoku::{
-	Chapter, ContentRating, DeepLinkResult, Filter, FilterValue, HomeComponent, HomeLayout, Manga,
-	MangaPageResult, MangaStatus, MangaWithChapter, MultiSelectFilter, Page, PageContent,
+	Chapter, ContentRating, DeepLinkResult, Filter, FilterValue, HomeComponent, HomeLayout, Listing,
+	Manga, MangaPageResult, MangaStatus, MangaWithChapter, MultiSelectFilter, Page, PageContent,
 	PageContext, Result, Viewer,
 	alloc::{String, Vec, string::ToString, vec},
 	helpers::{element::ElementHelpers, string::StripPrefixOrSelf},
@@ -370,11 +370,23 @@ pub trait Impl {
 
 	fn get_manga_list(
 		&self,
-		_params: &Params,
-		_listing: aidoku::Listing,
-		_page: i32,
+		params: &Params,
+		listing: Listing,
+		page: i32,
 	) -> Result<MangaPageResult> {
-		todo!()
+		let sort_index = match listing.id.as_str() {
+			"popular" | "views" => 5,
+			"trending" => 4,
+			"new" | "new-manga" => 6,
+			"alphabet" => 2,
+			_ => 1, // latest by default
+		};
+		let filters = vec![FilterValue::Sort {
+			id: "m_orderby".into(),
+			index: sort_index,
+			ascending: false,
+		}];
+		self.get_search_manga_list(params, None, page, filters)
 	}
 
 	fn get_home(&self, params: &Params) -> Result<HomeLayout> {

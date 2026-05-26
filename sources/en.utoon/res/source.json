@@ -2,7 +2,7 @@
 	"info": {
 		"id": "en.utoon",
 		"name": "Utoon",
-		"version": 1,
+		"version": 2,
 		"url": "https://utoon.net",
 		"contentRating": 1,
 		"languages": ["en"]

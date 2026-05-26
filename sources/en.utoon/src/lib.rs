@@ -1,5 +1,5 @@
 #![no_std]
-use aidoku::{prelude::*, Result, Source, Viewer};
+use aidoku::{prelude::*, Source, Viewer};
 use madara::{Impl, LoadMoreStrategy, Madara, Params};
 
 struct Utoon;
@@ -20,6 +20,8 @@ impl Impl for Utoon {
 			datetime_locale: "en_US_POSIX".into(),
 			// Exclude premium-gated chapters
 			chapter_selector: "li.wp-manga-chapter:not(.premium-block)".into(),
+			// Site hosts manhwa/manhua — meta_query chapter_type=manga would filter everything out
+			filter_non_manga_items: false,
 			..Default::default()
 		}
 	}
