@@ -1,0 +1,10 @@
+{
+	"info": {
+		"id": "fr.raijinscans",
+		"name": "Raijin Scans",
+		"version": 1,
+		"url": "https://raijin-scans.fr",
+		"contentRating": 1,
+		"languages": ["fr"]
+	}
+}
