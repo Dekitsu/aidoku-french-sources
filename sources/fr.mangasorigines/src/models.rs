@@ -1,4 +1,4 @@
-use aidoku::{alloc::{String, Vec, format, string::ToString}, prelude::*};
+use aidoku::{alloc::{String, ToString}};
 use serde::Deserialize;
 
 pub const BASE_URL: &str = "https://mangas-origines.fr";
@@ -72,6 +72,5 @@ pub fn strip_domain(url: &str) -> String {
 /// Gets the current date as a string in YYYY-MM-DD format.
 pub fn get_current_date() -> String {
     // Return a placeholder date - actual implementation would need std::time
-    // For no_std, we'll use a fixed or configurable approach
     "2026-10-08".to_string()
 }
