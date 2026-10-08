@@ -1,4 +1,4 @@
-use aidoku::{alloc::{String, format}, alloc::string::ToString, MangaStatus};
+use aidoku::{alloc::{String, format, vec}, alloc::string::ToString};
 use serde::Deserialize;
 
 pub const BASE_URL: &str = "https://mangas-origines.fr";
@@ -36,10 +36,10 @@ pub fn first_number(s: &str) -> Option<i32> {
     }).flatten()
 }
 
-/// Parses a relative date string (e.g., "10/08/26" or "10-08-26") to a date.
+/// Parses a relative date string (e.g., "10/08/26" or "10-08-26") to an integer.
 pub fn parse_relative_date(date_str: &str) -> Option<i64> {
     // Try DD/MM/YY format first
-    let parts: Vec<&str> = date_str.split('/').collect();
+    let parts: aidoku::alloc::vec::Vec<&str> = date_str.split('/').collect();
     if parts.len() >= 3 {
         if let (Ok(day), Ok(month), Ok(year)) = (parts[0].parse::<u16>(), parts[1].parse::<u16>(), parts[2].parse::<u16>()) {
             return Some((year as i64) * 10000 + (month as i64) * 100 + (day as i64));
@@ -47,7 +47,7 @@ pub fn parse_relative_date(date_str: &str) -> Option<i64> {
     }
     
     // Try DD-MM-YY format
-    let parts: Vec<&str> = date_str.split('-').collect();
+    let parts: aidoku::alloc::vec::Vec<&str> = date_str.split('-').collect();
     if parts.len() >= 3 {
         if let (Ok(day), Ok(month), Ok(year)) = (parts[0].parse::<u16>(), parts[1].parse::<u16>(), parts[2].parse::<u16>()) {
             return Some((year as i64) * 10000 + (month as i64) * 100 + (day as i64));
@@ -71,7 +71,7 @@ pub fn strip_domain(url: &str) -> String {
 
 /// Gets the current date as a string in YYYY-MM-DD format.
 pub fn get_current_date() -> String {
-    // Use alloc crate for time functions
+    // Use alloc crate for time functions - simplified version without std
     use aidoku::alloc::time::{SystemTime, UNIX_EPOCH};
     let now = SystemTime::now();
     let duration = now.duration_since(UNIX_EPOCH).unwrap_or_default();
