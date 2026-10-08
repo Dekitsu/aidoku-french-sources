@@ -4,9 +4,8 @@ mod models;
 mod reader;
 
 use aidoku::{
-    Chapter, DeepLinkHandler, DeepLinkResult, FilterValue, Home, ListingProvider, Manga,
-    MangaPageResult, Page, Result, Source, HomeLayout,
-    alloc::vec as alloc_vec,
+    Chapter, DeepLinkHandler, Home, ListingProvider, Manga, MangaPageResult, Page, Result, Source,
+    alloc::{String, Vec, format, string::ToString, vec},
     imports::html::Html,
     prelude::*,
 };
@@ -25,7 +24,7 @@ impl Source for MangaOrigines {
         &self,
         _query: Option<String>,
         _page: i32,
-        _filters: alloc_vec::Vec<FilterValue>,
+        _filters: Vec<FilterValue>,
     ) -> Result<MangaPageResult> {
         Ok(MangaPageResult { entries: vec![], has_next_page: false })
     }
@@ -34,7 +33,7 @@ impl Source for MangaOrigines {
         Ok(_manga)
     }
 
-    fn get_page_list(&self, _manga: Manga, chapter: Chapter) -> Result<alloc_vec::Vec<Page>> {
+    fn get_page_list(&self, _manga: Manga, chapter: Chapter) -> Result<Vec<Page>> {
         let url = chapter.url.unwrap_or_default();
         reader::get_pages(&url, &url)
     }
@@ -50,8 +49,7 @@ impl Home for MangaOrigines {
     fn get_home(&self) -> Result<HomeLayout> {
         let doc = Html::parse("")?;
         
-        // Extract popular manga
-        let popular_manga: alloc_vec::Vec<Manga> = doc
+        let popular_manga: Vec<Manga> = doc
             .select("div.popular-manga div.ori-card-content a[href*='/manga/']")
             .into_iter()
             .filter_map(|el| {
@@ -73,15 +71,15 @@ impl Home for MangaOrigines {
 
         Ok(HomeLayout {
             components: vec![
-                HomeComponent {
+                aidoku::HomeComponent {
                     title: None,
                     subtitle: None,
                     value: aidoku::HomeComponentValue::Scroller {
                         entries: popular_manga.into_iter().map(Into::into).collect(),
-                        listing: Some(Listing {
+                        listing: Some(aidoku::Listing {
                             id: String::from("popular"),
                             name: String::from("Populaire"),
-                            kind: ListingKind::Default,
+                            kind: aidoku::ListingKind::Default,
                         }),
                     },
                 },
@@ -97,7 +95,7 @@ impl DeepLinkHandler for MangaOrigines {
             None => return Ok(None),
         };
 
-        let parts: alloc_vec::Vec<&str> = path.split('/').collect();
+        let parts: Vec<&str> = path.split('/').collect();
 
         match parts.as_slice() {
             ["manga", slug] => {
@@ -115,15 +113,7 @@ impl DeepLinkHandler for MangaOrigines {
                         .select_first("div.ori-card-cover img, figure.wp-post-image img")
                         .and_then(|i| i.attr("abs:src"));
 
-                    return Ok(Some(DeepLinkResult {
-                        manga: Some(Manga {
-                            key: strip_base(&manga_url),
-                            title,
-                            cover,
-                            ..Default::default()
-                        }),
-                        chapter: None,
-                    }));
+                    return Ok(Some(DeepLinkResult::Manga { key: strip_base(&manga_url) }));
                 }
 
                 Ok(None)
@@ -131,13 +121,9 @@ impl DeepLinkHandler for MangaOrigines {
             ["manga", slug, "chapter", chap_num] => {
                 let chapter_url = format!("{}/chapitre/{}", BASE_URL, chap_num);
                 
-                return Ok(Some(DeepLinkResult {
-                    manga: None,
-                    chapter: Some(Chapter {
-                        key: strip_base(&chapter_url),
-                        title: Some(format!("Chapitre {}", chap_num)),
-                        ..Default::default()
-                    }),
+                return Ok(Some(DeepLinkResult::Chapter {
+                    manga_key: strip_base(&format!("{}/manga/{}", BASE_URL, slug)),
+                    key: strip_base(&chapter_url),
                 }));
             }
             _ => Ok(None),

@@ -2,7 +2,7 @@
 
 use aidoku::{Page, PageContent, Result};
 
-pub fn get_pages(_chapter_url: &str, html: &str) -> Result<alloc_vec::Vec<Page>> {
+pub fn get_pages(_chapter_url: &str, html: &str) -> Result<Vec<Page>> {
     let doc = Html::parse(html)?;
 
     let pages = doc.select("div.reading-content img.wp-manga-chapter-img, \
