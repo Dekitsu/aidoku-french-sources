@@ -1,7 +1,6 @@
 #![no_std]
 
 mod models;
-mod reader;
 
 use aidoku::{
     Chapter, DeepLinkHandler, Home, ListingProvider, Manga, MangaPageResult, Page, Result, Source,
@@ -11,7 +10,6 @@ use aidoku::{
 };
 
 use models::{BASE_URL, strip_base};
-use reader::get_pages;
 
 pub struct MangaOrigines;
 
@@ -34,8 +32,8 @@ impl Source for MangaOrigines {
     }
 
     fn get_page_list(&self, _manga: Manga, chapter: Chapter) -> Result<Vec<Page>> {
-        let url = chapter.url.unwrap_or_default();
-        reader::get_pages(&url, &url)
+        let html = std::str::from_utf8(_).unwrap_or("");  // Placeholder - will be replaced
+        reader::get_pages(chapter.url.as_deref().unwrap_or(""), html)
     }
 }
 
