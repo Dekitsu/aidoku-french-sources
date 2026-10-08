@@ -2,7 +2,7 @@
 
 use aidoku::{Page, PageContent, Result};
 
-pub fn get_pages(base_url: &str, chapter_url: &str, html: &str) -> Result<Vec<Page>> {
+pub fn get_pages(chapter_url: &str, html: &str) -> Result<Vec<Page>> {
     let doc = Html::parse(html)?;
 
     // Select images within .reading-content div
