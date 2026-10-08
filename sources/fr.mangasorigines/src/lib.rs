@@ -1,16 +1,17 @@
 #![no_std]
 
-use aidoku::{
-    Chapter, DeepLinkHandler, Home, ListingProvider, Manga, MangaPageResult, Page, Result, Source,
-    alloc::{String, Vec},
-    imports::{net::Request, html::Html},
-    prelude::*,
-};
-
 mod models;
 mod reader;
 
-use models::{BASE_URL, first_number, parse_relative_date, strip_base};
+use aidoku::{
+    Chapter, DeepLinkHandler, DeepLinkResult, FilterValue, Home, ListingProvider, Manga,
+    MangaPageResult, Page, Result, Source, HomeLayout,
+    alloc::vec as alloc_vec,
+    imports::html::Html,
+    prelude::*,
+};
+
+use models::{BASE_URL, strip_base};
 use reader::get_pages;
 
 pub struct MangaOrigines;
@@ -24,7 +25,7 @@ impl Source for MangaOrigines {
         &self,
         _query: Option<String>,
         _page: i32,
-        _filters: Vec<FilterValue>,
+        _filters: alloc_vec::Vec<FilterValue>,
     ) -> Result<MangaPageResult> {
         Ok(MangaPageResult { entries: vec![], has_next_page: false })
     }
@@ -33,38 +34,38 @@ impl Source for MangaOrigines {
         Ok(_manga)
     }
 
-    fn get_page_list(&self, _manga: Manga, _chapter: Chapter) -> Result<Vec<Page>> {
-        let doc = Html::parse(&_chapter.url.unwrap_or_default());
-        get_pages(&_chapter.url.unwrap_or_default(), &_chapter.url.unwrap_or_default(), &doc.to_string())
+    fn get_page_list(&self, _manga: Manga, chapter: Chapter) -> Result<alloc_vec::Vec<Page>> {
+        let url = chapter.url.unwrap_or_default();
+        reader::get_pages(&url, &url)
     }
 }
 
 impl ListingProvider for MangaOrigines {
-    fn get_manga_list(&self, _listing: Listing, _page: i32) -> Result<MangaPageResult> {
+    fn get_manga_list(&self, _listing: aidoku::Listing, _page: i32) -> Result<MangaPageResult> {
         Ok(MangaPageResult { entries: vec![], has_next_page: false })
     }
 }
 
 impl Home for MangaOrigines {
     fn get_home(&self) -> Result<HomeLayout> {
-        let doc = Html::parse("");
+        let doc = Html::parse("")?;
         
-        // Extract popular manga
-        let popular_manga: Vec<Manga> = doc
+        let popular_manga: alloc_vec::Vec<Manga> = doc
             .select("div.popular-manga div.ori-card-content a[href*='/manga/']")
             .into_iter()
             .filter_map(|el| {
-                let href = el.attr("abs:href")?;
-                let title = el.select_first(".entry-title a, h1.entry-title a, div.ori-card-title")?.text()?;
-                let cover = el
-                    .select_first("div.ori-card-cover img, figure.wp-post-image img")
-                    .and_then(|i| i.attr("abs:src"));
-
-                Some(Manga {
-                    key: strip_base(&href),
-                    title,
-                    cover,
-                    ..Default::default()
+                el.attr("abs:href").and_then(|href| {
+                    let title = el.select_first(".entry-title a, h1.entry-title a, div.ori-card-title")?.text()?;
+                    let cover = el
+                        .select_first("div.ori-card-cover img, figure.wp-post-image img")
+                        .and_then(|i| i.attr("abs:src"));
+                    
+                    Some(Manga {
+                        key: strip_base(&href),
+                        title,
+                        cover,
+                        ..Default::default()
+                    })
                 })
             })
             .collect();
@@ -92,14 +93,13 @@ impl DeepLinkHandler for MangaOrigines {
             None => return Ok(None),
         };
 
-        let parts: Vec<&str> = path.split('/').collect();
+        let parts: alloc_vec::Vec<&str> = path.split('/').collect();
 
         match parts.as_slice() {
             ["manga", slug] => {
-                // Build manga URL from slug
                 let manga_url = format!("{}/manga/{}", BASE_URL, slug);
                 
-                let doc = Html::parse(&manga_url);
+                let doc = Html::parse(&manga_url)?;
                 
                 if let Some(meta_div) = doc.select_first(".entry-meta, .post-meta") {
                     let title = meta_div
@@ -114,7 +114,7 @@ impl DeepLinkHandler for MangaOrigines {
                     return Ok(Some(DeepLinkResult {
                         manga: Some(Manga {
                             key: strip_base(&manga_url),
-                            title,
+                            title: Some(title),
                             cover,
                             ..Default::default()
                         }),
@@ -125,14 +125,13 @@ impl DeepLinkHandler for MangaOrigines {
                 Ok(None)
             }
             ["manga", slug, "chapter", chap_num] => {
-                // Build chapter URL from slug and number
                 let chapter_url = format!("{}/chapitre/{}", BASE_URL, chap_num);
                 
                 return Ok(Some(DeepLinkResult {
                     manga: None,
                     chapter: Some(Chapter {
                         key: strip_base(&chapter_url),
-                        title: format!("Chapitre {}", chap_num),
+                        title: Some(format!("Chapitre {}", chap_num)),
                         ..Default::default()
                     }),
                 }));
