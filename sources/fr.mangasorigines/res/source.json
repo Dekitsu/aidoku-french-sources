@@ -1,0 +1,14 @@
+{
+	"info": {
+		"id": "fr.mangasorigines",
+		"name": "Mangas Origines",
+		"url": "https://mangas-origines.fr",
+		"description": "Lecteur de mangas en français avec un catalogue varié incluant manhwa, manhua et manga japonais.",
+		"version": 16,
+		"contentRating": 1,
+		"languages": ["fr"]
+	},
+	"config": {
+		"breakingChangeVersion": 15
+	}
+}

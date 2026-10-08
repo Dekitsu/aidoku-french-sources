@@ -1,0 +1,12 @@
+[package]
+name = "fr.mangasorigines"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+aidoku = { path = "../../.." }
+serde = { version = "1", features = ["derive"] }
+base64 = "0.22"
