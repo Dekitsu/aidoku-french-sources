@@ -2,7 +2,7 @@
 //!
 //! Extracts images from .reading-content div which contains page-break wrappers.
 
-use aidoku::{Page, PageContent, Result, alloc::vec, imports::html::Html, prelude::*};
+use aidoku::{Page, PageContent, Result, alloc::vec, imports::html::{Document, Element}, prelude::*};
 use core::str;
 
 pub fn get_pages(base_url: &str, chapter_url: &str, html: &str) -> Result<Vec<Page>> {

@@ -1,4 +1,4 @@
-use aidoku::{alloc::{String, format}, MangaStatus};
+use aidoku::{alloc::{String, format}, alloc::string::ToString, MangaStatus};
 use serde::Deserialize;
 
 pub const BASE_URL: &str = "https://mangas-origines.fr";
@@ -37,15 +37,21 @@ pub fn first_number(s: &str) -> Option<i32> {
 }
 
 /// Parses a relative date string (e.g., "10/08/26" or "10-08-26") to a date.
-pub fn parse_relative_date(date_str: &str) -> Option<String> {
+pub fn parse_relative_date(date_str: &str) -> Option<i64> {
     // Try DD/MM/YY format first
-    if let Some(year) = date_str.split('/').nth(2).and_then(|s| s.parse::<u16>().ok()) {
-        return Some(format!("{year:04}-{}", date_str.split('/').next().unwrap_or("01"), date_str.split('/').nth(1).unwrap_or("01")));
+    let parts: Vec<&str> = date_str.split('/').collect();
+    if parts.len() >= 3 {
+        if let (Ok(day), Ok(month), Ok(year)) = (parts[0].parse::<u16>(), parts[1].parse::<u16>(), parts[2].parse::<u16>()) {
+            return Some((year as i64) * 10000 + (month as i64) * 100 + (day as i64));
+        }
     }
     
     // Try DD-MM-YY format
-    if let Some(year) = date_str.split('-').nth(2).and_then(|s| s.parse::<u16>().ok()) {
-        return Some(format!("{year:04}-{}", date_str.split('-').next().unwrap_or("01"), date_str.split('-').nth(1).unwrap_or("01")));
+    let parts: Vec<&str> = date_str.split('-').collect();
+    if parts.len() >= 3 {
+        if let (Ok(day), Ok(month), Ok(year)) = (parts[0].parse::<u16>(), parts[1].parse::<u16>(), parts[2].parse::<u16>()) {
+            return Some((year as i64) * 10000 + (month as i64) * 100 + (day as i64));
+        }
     }
     
     None
@@ -65,8 +71,8 @@ pub fn strip_domain(url: &str) -> String {
 
 /// Gets the current date as a string in YYYY-MM-DD format.
 pub fn get_current_date() -> String {
-    // Use aidoku's alloc::std for time functions
-    use aidoku::alloc::std::time::{SystemTime, UNIX_EPOCH};
+    // Use alloc crate for time functions
+    use aidoku::alloc::time::{SystemTime, UNIX_EPOCH};
     let now = SystemTime::now();
     let duration = now.duration_since(UNIX_EPOCH).unwrap_or_default();
     let seconds = duration.as_secs() as u64;
@@ -77,7 +83,7 @@ pub fn get_current_date() -> String {
     
     // Rough approximation for months
     if remaining >= 31536000 { year += 1; remaining -= 31536000; }
-    let mut month = ((remaining / 2592000) + 1) as u8;
+    let month = ((remaining / 2592000) + 1) as u8;
     if month > 12 { month = 1; }
     let day = ((remaining % 2592000) / 86400) as u8 + 1;
     

@@ -4,6 +4,7 @@ use aidoku::{
     Chapter, DeepLinkHandler, DeepLinkResult, FilterValue, Home, HomeComponent,
     HomeComponentValue, HomeLayout, Listing, ListingKind, ListingProvider, Manga, MangaPageResult,
     Page, Result, Source,
+    send_partial_result,
     alloc::{String, Vec, format, string::ToString, vec},
     imports::{
         html::{Document, Element, Html},
@@ -305,9 +306,9 @@ fn parse_chapters(doc: &Document, manga_url: &str) -> Vec<Chapter> {
 
             Some(Chapter {
                 key: strip_base(&href),
-                title: Some(link.text().clone()),
-                chapter_number: first_number(num_str.as_deref()).map(|n| n as f32),
-                date_uploaded: parse_relative_date(date.as_deref()),
+                title: link.text()?,
+                chapter_number: first_number(num_str.unwrap_or_default().as_str()).map(|n| n as f64),
+                date_uploaded: parse_relative_date(date.unwrap_or_default().as_str()),
                 url: Some(href),
                 ..Default::default()
             })
