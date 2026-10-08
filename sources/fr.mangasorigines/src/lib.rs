@@ -50,6 +50,7 @@ impl Home for MangaOrigines {
     fn get_home(&self) -> Result<HomeLayout> {
         let doc = Html::parse("")?;
         
+        // Extract popular manga
         let popular_manga: alloc_vec::Vec<Manga> = doc
             .select("div.popular-manga div.ori-card-content a[href*='/manga/']")
             .into_iter()
@@ -70,19 +71,22 @@ impl Home for MangaOrigines {
             })
             .collect();
 
-        if !popular_manga.is_empty() {
-            Ok(HomeLayout {
-                manga: Some(popular_manga),
-                ..Default::default()
-            })
-        } else {
-            Ok(HomeLayout {
-                latest_releases: vec![],
-                popular_manga: vec![],
-                trending_manga: vec![],
-                ..Default::default()
-            })
-        }
+        Ok(HomeLayout {
+            components: vec![
+                HomeComponent {
+                    title: None,
+                    subtitle: None,
+                    value: aidoku::HomeComponentValue::Scroller {
+                        entries: popular_manga.into_iter().map(Into::into).collect(),
+                        listing: Some(Listing {
+                            id: String::from("popular"),
+                            name: String::from("Populaire"),
+                            kind: ListingKind::Default,
+                        }),
+                    },
+                },
+            ],
+        })
     }
 }
 
@@ -114,7 +118,7 @@ impl DeepLinkHandler for MangaOrigines {
                     return Ok(Some(DeepLinkResult {
                         manga: Some(Manga {
                             key: strip_base(&manga_url),
-                            title: Some(title),
+                            title,
                             cover,
                             ..Default::default()
                         }),
