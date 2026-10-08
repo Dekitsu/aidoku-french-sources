@@ -1,4 +1,4 @@
-//! Pure-Rust page extractor for Mangas Origines (WordPress + custom theme).
+//! Pure-Rust page extractor for Mangas Origines.
 
 use aidoku::{Page, PageContent, Result};
 
