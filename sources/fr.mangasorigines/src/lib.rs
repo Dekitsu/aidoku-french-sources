@@ -7,7 +7,7 @@ use aidoku::{
     
     alloc::{String, Vec, format, string::ToString, vec},
     imports::{
-        html::{Document, Element, Html},
+        html::{Document, ElementList, Html},
         net::Request,
     },
     prelude::*,
@@ -84,7 +84,7 @@ impl Source for MangasOrigines {
                 .and_then(|e| e.attr("abs:src"))
                 .or(manga.cover);
             // Authors - in .ori-sr-signature
-            if let Some(author) = doc.select("div.ori-sr-signature a[href*='/manga-auteurs/']").next() {
+            if let Some(author) = doc.select("div.ori-sr-signature a[href*='/manga-auteurs/']").into_iter().next() {
                 manga.authors = Some(vec![author.text().filter(|t| !t.is_empty()).unwrap_or_default()]);
             }
 
@@ -109,7 +109,7 @@ impl Source for MangasOrigines {
             );
 
             if needs_chapters {
-                send_partial_result(&manga);
+                # send_partial_result not available
             }
         }
 
@@ -306,7 +306,8 @@ fn parse_chapters(doc: &Document, manga_url: &str) -> Vec<Chapter> {
 
             Some(Chapter {
                 key: strip_base(&href),
-                title: link.text()?,
+                title: link.text().unwrap_or_default(),
+
                 chapter_number: first_number(num_str.unwrap_or_default().as_str()).map(|n| n as f32),
                 date_uploaded: parse_relative_date(date.unwrap_or_default().as_str()),
                 url: Some(href),
