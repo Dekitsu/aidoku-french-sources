@@ -52,23 +52,14 @@ fn search_manga_from_element(el: &ElementList) -> Vec<Manga> {
     popular_manga_from_element(el)
 }
 
-pub fn parse_home(doc: &Document, url: &str) -> MangaPageResult {
+pub fn parse_home(doc: &Document, url: &str) -> Result<Vec<Manga>> {
     let manga_links = doc
         .select("div.ori-card-content a[href*='/manga/'], div.popular-manga a[href*='/manga/']")
         .into_iter()
         .filter_map(|el| popular_manga_from_element(&el))
         .collect();
 
-    if !manga_links.is_empty() {
-        return MangaPageResult::Home(Manga {
-            key: strip_base(url),
-            title: String::from("Mangas Origines"),
-            manga: Some(manga_links),
-            ..Default::default()
-        });
-    }
-
-    MangaPageResult::Empty
+    Ok(manga_links)
 }
 
 fn parse_chapters(doc: &Document, manga_url: &str) -> Vec<Chapter> {
