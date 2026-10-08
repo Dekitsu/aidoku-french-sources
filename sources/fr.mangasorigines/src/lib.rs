@@ -82,18 +82,11 @@ impl Source for MangasOrigines {
                 .select_first("figure.wp-post-image img, div.summary_image img")
                 .and_then(|e| e.attr("abs:src"))
                 .or(manga.cover);
-
             // Authors - in .ori-sr-signature
-            if let Some(author) = doc
-                .select("div.ori-sr-signature a[href*='/manga-auteurs/']")
-                .map(|els| els.filter_map(|e| {
-                    e.text().filter(|t| !t.is_empty())
-                }).collect::<Vec<_>>())
-                .flatten()
-                .next()
-            {
-                manga.authors = Some(vec![author]);
+            if let Some(author) = doc.select("div.ori-sr-signature a[href*='/manga-auteurs/']").next() {
+                manga.authors = Some(vec![author.text().filter(|t| !t.is_empty()).unwrap_or_default()]);
             }
+
 
             // Description - in .item-summary or .entry-content
             manga.description = parse_description(&doc);
@@ -296,7 +289,7 @@ fn search_manga_from_element(el: &Element) -> Option<Manga> {
 fn parse_chapters(doc: &Document, manga_url: &str) -> Vec<Chapter> {
     // Chapters are inside .ori-chl-liste div
     let chapters = doc
-        .select("div.ori-chl-liste div.ori-chl-row")
+        .select("div.ori-chl-liste div.ori-chl-row").into_iter()
         .filter_map(|el| {
             let link = el.select_first(".ori-chl-corps, a[href*='/chapitre/']")?;
             let href = link.attr("abs:href")?;
